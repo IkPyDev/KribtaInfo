@@ -10,9 +10,13 @@ import androidx.core.view.isVisible
 
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.ikpydev.kribtainfo.R
 import com.ikpydev.kribtainfo.common.UiEvent
+import com.ikpydev.kribtainfo.data.dto.CoinModel
 import com.ikpydev.kribtainfo.databinding.FragmentCoinListBinding
+import com.ikpydev.kribtainfo.utils.CoinListAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 
@@ -22,9 +26,11 @@ class CoinListFragment : Fragment() {
     private val binding get() = _bingding!!
     private val viewModel: CoinListViewModel by viewModels()
     val TAG = "TAG"
+    private lateinit var coinListAdapter:CoinListAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.getCoinList()
+        coinListAdapter = CoinListAdapter()
     }
 
     override fun onCreateView(
@@ -38,6 +44,10 @@ class CoinListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.RecyclerView.apply {
+            adapter = coinListAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
         @Suppress("DEPRECATION")
         lifecycleScope.launchWhenCreated {
             viewModel.coinListObserver.collectLatest {
@@ -57,7 +67,12 @@ class CoinListFragment : Fragment() {
 
                     }
                     is UiEvent.Seccuss<*> -> {
-                        Log.d(TAG, "onViewCreated: ${it.data}")
+                        binding.progressBar.isVisible = false
+                        binding.RecyclerView.isVisible = true
+                        binding.errorTv.isVisible = false
+
+                        val coinList = it.data as List<CoinModel>
+                        coinListAdapter.submitList(coinList)
                     }
                 }
             }
